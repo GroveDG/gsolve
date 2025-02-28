@@ -41,6 +41,7 @@ fn along_linear(o: Vector, v: Vector, t: Number) -> Vector {
 }
 
 pub fn meet(g0: Vec<Geo>, g1: Vec<Geo>) -> Vec<Geo> {
+    println!("{:?} {:?}", g0, g1);
     g0.iter()
         .cartesian_product(g1)
         .map(|(&g0, g1)| intersect(g0, g1))
