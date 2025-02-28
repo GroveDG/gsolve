@@ -135,7 +135,6 @@ impl TargetedConstraint {
                     }
                     n
                 };
-                println!("{} {}", n, pos[p3]);
                 vec![Geo::Two(TwoD::Half { o: pos[p4], n })]
             }
         }

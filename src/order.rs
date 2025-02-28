@@ -103,7 +103,6 @@ fn compute_forest(figure: &mut Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)
             // Compute tree.
             let mut i = 1;
             while i < order.len() {
-                println!("{:?}", points);
                 let point = order[i];
                 // Mark as known.
                 points.insert(point);
@@ -140,11 +139,6 @@ fn compute_forest(figure: &mut Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)
 pub fn order_bfs(figure: &mut Figure) -> Vec<(PID, Vec<TargetedConstraint>)> {
     let mut forest = compute_forest(figure);
 
-    for tree in forest.iter() {
-        for (point, constraints) in tree {
-            println!("{:?} {:?}", point, constraints);
-        }
-    }
     debug_assert_eq!(forest.len(), 1);
     let order = forest.remove(0);
     debug_assert_eq!(order.len(), figure.points.len());
