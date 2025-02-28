@@ -5,7 +5,7 @@ use super::constraints::Constraint;
 pub type PID = usize;
 pub type CID = usize;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Figure {
     pub(crate) constraints: Vec<(Constraint, Vec<PID>)>,
     pub(crate) points: Vec<Vec<CID>>,

@@ -1,15 +1,18 @@
 use std::collections::HashMap;
 
 use crate::{
-    figure::{Figure, CID}, math::{
+    constraints::TargetedConstraint,
+    figure::{Figure, CID},
+    math::{
         geo::{choose, meet, Geo, TwoD},
         Vector,
-    }, util::locate
+    },
+    util::locate,
+    PID,
 };
 
 fn iter_brute(
-    order: &Vec<Vec<CID>>,
-    figure: &mut Figure,
+    order: &Vec<(PID, Vec<TargetedConstraint>)>,
     positions: &mut Vec<Vector>,
     i: usize,
 ) -> Result<(), ()> {
@@ -17,29 +20,23 @@ fn iter_brute(
         return Ok(());
     };
     let geo = order[i]
+        .1
         .iter()
-        .map(|&cid| {
-            let (c, c_points) = figure.constraints[cid];
-            let t_ind = locate(&c_points, &i).unwrap();
-            c.geo(&positions[..i], t_ind)
-        })
+        .map(|constraint| constraint.geo(positions))
         .reduce(meet)
         .unwrap_or_else(|| vec![Geo::Two(TwoD::All)]);
     for g in geo {
         positions[i] = choose(g);
-        if iter_brute(order, figure, positions, i + 1).is_ok() {
+        if iter_brute(order, positions, i + 1).is_ok() {
             return Ok(());
         }
     }
     return Err(());
 }
 
-pub fn solve_brute(
-    figure: &mut Figure,
-    order: Vec<Vec<CID>>,
-) -> Result<Vec<Vector>, String> {
+pub fn solve_brute(order: Vec<(PID, Vec<TargetedConstraint>)>) -> Result<Vec<Vector>, String> {
     let mut positions = vec![Vector::ZERO; order.len()];
-    if iter_brute(&order, figure, &mut positions, 0).is_ok() {
+    if iter_brute(&order, &mut positions, 0).is_ok() {
         return Ok(positions);
     } else {
         Err("solve failed".to_string())

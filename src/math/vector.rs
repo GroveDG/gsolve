@@ -72,21 +72,6 @@ impl Display for Vector {
     }
 }
 
-pub fn bounding_box<'a, I>(vectors: I) -> (Vector, Vector)
-where
-    I: IntoIterator<Item = &'a Vector>,
-{
-    let mut min = Vector::POSINF;
-    let mut max = Vector::NEGINF;
-    for v in vectors.into_iter() {
-        if v.x < min.x { min.x = v.x }
-        if v.y < min.y { min.y = v.y }
-        if v.x > max.x { max.x = v.x }
-        if v.y > max.y { max.y = v.y }
-    }
-    (min, max)
-}
-
 impl AboutEq for Vector {
     fn about_eq(self, v: Self) -> bool {
         self.x.about_eq(v.x) && self.y.about_eq(v.y)
