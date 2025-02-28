@@ -1,4 +1,7 @@
-use std::{fmt::Display, ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign}};
+use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 
 use super::{AboutEq, Number};
 
@@ -15,9 +18,15 @@ impl Vector {
     pub const NEGY: Vector = Vector { x: 0.0, y: -1.0 };
     pub const POSX: Vector = Vector { x: 1.0, y: 0.0 };
     pub const NEGX: Vector = Vector { x: -1.0, y: 0.0 };
-    
-    pub const POSINF: Vector = Vector { x: Number::INFINITY, y: Number::INFINITY };
-    pub const NEGINF: Vector = Vector { x: Number::NEG_INFINITY, y: Number::NEG_INFINITY };
+
+    pub const POSINF: Vector = Vector {
+        x: Number::INFINITY,
+        y: Number::INFINITY,
+    };
+    pub const NEGINF: Vector = Vector {
+        x: Number::NEG_INFINITY,
+        y: Number::NEG_INFINITY,
+    };
 
     pub fn mag(self) -> Number {
         Number::sqrt(self.x * self.x + self.y * self.y)
@@ -48,14 +57,14 @@ impl Vector {
     pub fn rot(self, angle: Number) -> Vector {
         let v = Vector::from_angle(angle);
         Vector {
-            x: self.x*v.x-self.y*v.y,
-            y: self.x*v.y+self.y*v.x
+            x: self.x * v.x - self.y * v.y,
+            y: self.x * v.y + self.y * v.x,
         }
     }
     pub fn from_angle(angle: Number) -> Vector {
         Vector {
             x: Number::cos(angle),
-            y: Number::sin(angle)
+            y: Number::sin(angle),
         }
     }
 }
@@ -223,5 +232,16 @@ impl DivAssign<Number> for Vector {
     fn div_assign(&mut self, rhs: Number) {
         self.x /= rhs;
         self.y /= rhs;
+    }
+}
+
+impl Neg for Vector {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            x: self.x,
+            y: self.y,
+        }
     }
 }

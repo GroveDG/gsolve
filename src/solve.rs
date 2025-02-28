@@ -15,16 +15,14 @@ fn iter_brute(
     if i >= order.len() {
         return Ok(());
     };
-    let id = order[i].0;
-    let geos = &order[i].1;
+    let (id, geos) = &order[i];
     let geo = geos
         .iter()
         .map(|constraint| constraint.geo(positions))
         .reduce(meet)
         .unwrap_or_else(|| vec![Geo::Two(TwoD::All)]);
     for g in geo {
-        println!("{:?}", g);
-        positions[id] = choose(g);
+        positions[*id] = choose(g);
         if iter_brute(order, positions, i + 1).is_ok() {
             return Ok(());
         }

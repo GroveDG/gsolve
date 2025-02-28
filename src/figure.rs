@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fmt::Display};
+use std::collections::HashMap;
+
+use itertools::Itertools;
 
 use super::constraints::Constraint;
 
@@ -19,7 +21,7 @@ impl Figure {
 
     pub fn add_constraint(&mut self, constraint: Constraint, points: Vec<PID>) {
         let cid = self.constraints.len();
-        for pid in &points {
+        for pid in points.iter().unique() {
             self.points.get_mut(*pid).unwrap().push(cid);
         }
         self.constraints.push((constraint, points));

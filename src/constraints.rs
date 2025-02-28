@@ -127,19 +127,16 @@ impl TargetedConstraint {
                 Number::NEG_INFINITY,
             ))],
             TargetedConstraint::Chirality(pol, p0, p1, p2, p3, p4) => {
-                let measured = if (pos[p1] - pos[p0]).cross(pos[p2] - pos[p0]).signum() == -1. {
-                    Polarity::Anti
-                } else {
-                    Polarity::Pro
-                };
+                let measured = (pos[p1] - pos[p0]).cross(pos[p2] - pos[p1]).signum();
                 let n = {
-                    let mut n = (pos[p4] - pos[p3]).unit();
-                    if measured != pol {
-                        n = n.perp();
+                    let mut n = (pos[p4] - pos[p3]).unit().perp() * measured;
+                    if pol == Polarity::Anti {
+                        n = -n;
                     }
                     n
                 };
-                vec![Geo::Two(TwoD::Half { o: pos[p3], n })]
+                println!("{} {}", n, pos[p3]);
+                vec![Geo::Two(TwoD::Half { o: pos[p4], n })]
             }
         }
     }
@@ -292,13 +289,15 @@ mod targeting {
         for (angle, pol) in points.chunks_exact(3).zip(polarities) {
             let (known, unknown) = match knowledge.next_tuple()? {
                 (true, true, false) => ((angle[0], angle[1]), angle[2]),
-                (true, false, true) => ((angle[0], angle[2]), angle[1]),
+                (true, false, true) => ((angle[2], angle[0]), angle[1]),
                 (false, true, true) => ((angle[1], angle[2]), angle[0]),
-                (true, true, true) if known_angle.is_none() => {
+                (true, true, true) => {
                     known_angle = Some((pol, angle[0], angle[1], angle[2]));
                     continue;
                 }
-                _ => continue,
+                _ => {
+                    continue;
+                },
             };
             targets.push((pol, known, unknown));
         }

@@ -99,12 +99,11 @@ fn compute_forest(figure: &mut Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)
             let mut statuses = statuses.clone();
 
             order.push(orbiter);
-            points.insert(orbiter);
 
             // Compute tree.
             let mut i = 1;
             while i < order.len() {
-                println!("{:?}", order);
+                println!("{:?}", points);
                 let point = order[i];
                 // Mark as known.
                 points.insert(point);
