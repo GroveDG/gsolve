@@ -51,7 +51,7 @@ fn expand_tree<'a>(
             // Add constraint to target.
             // Skip if constraint is already applied
             // or non-discretizing.
-            if status.add_constraint(cid, constraint) {
+            if !status.add_constraint(cid, constraint) {
                 continue;
             }
             // Push if just discretized.
@@ -78,9 +78,10 @@ fn compute_tree<'a>(
     };
     let mut points: HashSet<PID> = HashSet::from_iter([root, orbiter]);
     let mut i = 1;
-    let mut order = Vec::from_iter([root, orbiter]);
+    let mut order = vec![root, orbiter];
 
     while i < order.len() {
+        println!("{:?}", order);
         let point = order[i];
         // Mark as known.
         points.insert(point);
@@ -141,10 +142,16 @@ fn compute_forest(figure: &mut Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)
 }
 
 pub fn order_bfs(figure: &mut Figure) -> Vec<(PID, Vec<TargetedConstraint>)> {
-    let forest = compute_forest(figure);
+    let mut forest = compute_forest(figure);
 
-    println!("{:?}", forest);
-    assert_eq!(forest.len(), 1);
+    for tree in forest.iter() {
+        for (point, constraints) in tree {
+            println!("{:?} {:?}", point, constraints);
+        }
+    }
+    debug_assert_eq!(forest.len(), 1);
+    let order = forest.remove(0);
+    debug_assert_eq!(order.len(), figure.points.len());
 
     forest.into_iter().flatten().collect()
 }

@@ -21,6 +21,7 @@ pub enum Constraint {
     Chirality(Vec<Polarity>),
 }
 #[derive(Debug, Clone, Copy)]
+
 pub enum Element {
     Distance,
     Angle,
