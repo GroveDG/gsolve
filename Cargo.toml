@@ -1,6 +1,9 @@
 [package]
 name = "gsolve"
 version = "0.1.0"
+authors = ["GroveDG"]
+description = "A geometry-based geometric constraint solver"
+repository = "https://github.com/GroveDG/gsolve"
 edition = "2021"
 
 [dependencies]
