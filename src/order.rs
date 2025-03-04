@@ -1,3 +1,7 @@
+//! Orders a [Figure] into a collection of target points ([PID]) and
+//! collections of [TargetedConstraints][TargetedConstraint] which
+//! are used in [solving][crate::solve].
+
 use std::{collections::HashMap, mem::take};
 
 use crate::{
@@ -136,6 +140,32 @@ fn compute_forest(figure: &mut Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)
     orders
 }
 
+/// Uses a breadth-first search.
+/// 
+/// For each origin/root point, The solver picks a second point called an orbiter.
+/// The orbiter's position is arbitrarily selected from a possibility space
+/// applicable from only the root. It is called an orbiter because if the constraint
+/// were a Distance constraint, the possibility space would be a circle
+/// and this point could "orbit" the root.
+///
+/// Then all possibility spaces currently applicable to all unknown are counted up.
+/// A point is considered discrete (and therefore known for ordering purposes) when
+/// two or more 1D constraints are applied. This is assumed because two 1D elements
+/// (lines, including curves) intersect at a finite set of 0D elements (points) as 
+/// long as they are not identical for some continuous range.
+///
+/// Constraints whose possibility space is a 2D element (an area) are applied only
+/// to already discrete sets of points and are not counted towards the two
+/// constraints necessecary for discretizing.
+///
+/// If there are no more unknown points, the current order is declared useable and
+/// the solver moves onto Solving. Otherwise it moves to the next root-oribiter
+/// pair. If this pair has already appeared in another order, it's order must be a
+/// subset of a previous order and can be skipped. Otherwise, Ordering repeats
+/// until a valid order has been found or there are no valid root-orbiter pairs.
+///
+/// Currently an order is only valid if it contains all points. There is likely a
+/// way to seperate independent orders into their own figures.
 pub fn order_bfs(figure: &mut Figure) -> Vec<(PID, Vec<TargetedConstraint>)> {
     let mut forest = compute_forest(figure);
 

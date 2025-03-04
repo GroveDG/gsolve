@@ -4,25 +4,25 @@ use itertools::Itertools;
 use super::{AboutEq, Number};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum TwoD {
+pub(crate) enum TwoD {
     Half { o: Vector, n: Vector },
     All,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum OneD {
+pub(crate) enum OneD {
     Linear { o: Vector, v: Vector, l: Number },
     Circle { c: Vector, r: Number },
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Geo {
+pub(crate) enum Geo {
     Zero(Vector),
     One(OneD),
     Two(TwoD),
 }
 
-pub fn line_from_points(p0: Vector, p1: Vector, l: Number) -> OneD {
+pub(crate) fn line_from_points(p0: Vector, p1: Vector, l: Number) -> OneD {
     OneD::Linear {
         o: p0,
         v: (p1 - p0).unit(),
@@ -40,7 +40,7 @@ fn along_linear(o: Vector, v: Vector, t: Number) -> Vector {
     o + v * t
 }
 
-pub fn meet(g0: Vec<Geo>, g1: Vec<Geo>) -> Vec<Geo> {
+pub(crate) fn meet(g0: Vec<Geo>, g1: Vec<Geo>) -> Vec<Geo> {
     g0.iter()
         .cartesian_product(g1)
         .map(|(&g0, g1)| intersect(g0, g1))
@@ -150,7 +150,7 @@ fn intersect(g0: Geo, g1: Geo) -> Vec<Geo> {
     }
 }
 
-pub fn dist(p: Vector, g: Geo) -> Number {
+pub(crate) fn dist(p: Vector, g: Geo) -> Number {
     match g {
         Geo::Zero(p1) => p.dist(p1),
         Geo::One(g) => match g {
@@ -166,7 +166,7 @@ pub fn dist(p: Vector, g: Geo) -> Number {
     }
 }
 
-pub fn choose(g: Geo) -> Vector {
+pub(crate) fn choose(g: Geo) -> Vector {
     match g {
         Geo::Zero(p) => p,
         Geo::One(g) => match g {

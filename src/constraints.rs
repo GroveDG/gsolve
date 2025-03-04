@@ -6,24 +6,55 @@ use crate::{
     },
 };
 
+/// Indicates a 1D direction.
+///
+/// This is used ambiguously for [`Constraint::Chirality`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Polarity {
+    /// Negative to positive.
     Pro,
+    /// Positive to negative.
     Anti,
 }
 
+/// Constraints that are user-friendly.
+///
+/// Constraints are specified intuitively to users in an untargeted way.
+/// This is as opposed to [`TargetedConstraint`] which is used for solving.
+///
+/// Used with [Figure::add_constraint][`crate::Figure::add_constraint`].
+/// Each constraint has its own point ordering.
 #[derive(Debug, Clone)]
 pub enum Constraint {
+    /// A geometric element with its specified measure.
+    /// 
+    /// Point order is dependent on the [`Element`].
     Element(Number, Element),
+    /// A set of parallel lines.
+    /// 
+    /// Lines are specified as pairs of points.
     Parallel,
+    /// A set of perpendicular lines.
+    /// 
+    /// Lines are specified as pairs of points. Lines are perpendicular to their neighbors, so lines alterante direction.
     Perpendicular,
+    /// A set of points which all lie on the same line.
+    /// 
+    /// Points are unordered.
     Collinear,
+    /// A set of angles with their relative directions.
+    /// 
+    /// Angles are specified in triples of points. Angles with the same polarity are in the same direction.
+    /// Angles with opposite polarity are in opposite directions.
     Chirality(Vec<Polarity>),
 }
 #[derive(Debug, Clone, Copy)]
 
+/// A geometric element (used with [Constraint]).
 pub enum Element {
+    /// The distance between two points.
     Distance,
+    /// The angle between two coterminal segments.
     Angle,
 }
 
@@ -49,18 +80,44 @@ impl Constraint {
     }
 }
 
+/// Constraints used for solving.
+/// 
+/// TargetedConstraints are [Constraints][Constraint] that have been ordered and targeted.
+/// This makes them essentially commands which are simply executed in order when solving.
+/// 
+/// [PIDs][PID] specified are known points.
+/// The target is the only unknown point which is specified separately.
+/// 
+/// TargetedConstraints should be generated with an order function like [order_bfs][crate::order_bfs].
 #[derive(Debug, Clone, Copy)]
 pub enum TargetedConstraint {
+    /// A geometric element with its specified measure.
     Element(Number, TargetedElement),
+    /// The first two points form a known line.
+    /// The third point and target make a parallel line.
     Parallel(PID, PID, PID),
+    /// The first two points form a known line.
+    /// The third point and target make a perpendicular line.
     Perpendicular(PID, PID, PID),
+    /// The known points make a line which the target also lies on.
     Collinear(PID, PID),
+    /// The first three points are a known angle.
+    /// The next two points and the target form an angle.
+    /// The direction of these angles is the same if the
+    /// [Polarity] is [Pro][Polarity::Pro] and opposite
+    /// if the [Polarity] is [Anti][Polarity::Anti].
     Chirality(Polarity, PID, PID, PID, PID, PID),
 }
+
+/// A target geometric element (used with [TargetedConstraint]).
 #[derive(Debug, Clone, Copy)]
 pub enum TargetedElement {
+    /// The distance between the known point and the target.
     Distance(PID),
+    /// The angle between the two known points where the target is the vertex.
     AngleEnd(PID, PID),
+    /// The angle between the second known point and the target
+    /// where the first known point is the vertex.
     AngleVertex(PID, PID),
 }
 impl TargetedConstraint {
@@ -296,7 +353,7 @@ mod targeting {
                 }
                 _ => {
                     continue;
-                },
+                }
             };
             targets.push((pol, known, unknown));
         }

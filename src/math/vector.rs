@@ -5,12 +5,15 @@ use std::{
 
 use super::{AboutEq, Number};
 
+/// 2D Vector.
+#[allow(missing_docs)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Vector {
     pub x: Number,
     pub y: Number,
 }
 
+#[allow(missing_docs)]
 impl Vector {
     pub const ZERO: Vector = Vector { x: 0.0, y: 0.0 };
 
@@ -27,33 +30,40 @@ impl Vector {
         x: Number::NEG_INFINITY,
         y: Number::NEG_INFINITY,
     };
-
+    /// Magnitude.
     pub fn mag(self) -> Number {
         Number::sqrt(self.x * self.x + self.y * self.y)
     }
+    /// Distance.
     pub fn dist(self, rhs: Self) -> Number {
         (rhs - self).mag()
     }
+    /// Normalized
     pub fn unit(self) -> Vector {
         let d = self.mag();
         self / d
     }
+    /// Normalized and return magnitude.
     pub fn unit_mag(self) -> (Vector, Number) {
         let d = self.mag();
         (self / d, d)
     }
+    /// Dot product.
     pub fn dot(self, rhs: Self) -> Number {
         self.x * rhs.x + self.y * rhs.y
     }
+    /// Cross product.
     pub fn cross(self, rhs: Self) -> Number {
         self.x * rhs.y - self.y * rhs.x
     }
+    /// Perpendicular with positive rotation.
     pub fn perp(self) -> Vector {
         Vector {
             x: -self.y,
             y: self.x,
         }
     }
+    /// Rotate.
     pub fn rot(self, angle: Number) -> Vector {
         let v = Vector::from_angle(angle);
         Vector {
@@ -61,6 +71,7 @@ impl Vector {
             y: self.x * v.y + self.y * v.x,
         }
     }
+    /// Polar of length 1 to cartesian.
     pub fn from_angle(angle: Number) -> Vector {
         Vector {
             x: Number::cos(angle),

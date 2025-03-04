@@ -1,8 +1,9 @@
+/// Numerical type.
 pub type Number = f64;
 
-pub const EPSILON: Number = 1e-9;
+pub(crate) const EPSILON: Number = 1e-9;
 
-pub trait AboutEq {
+pub(crate) trait AboutEq {
     fn about_eq(self, v: Self) -> bool;
     fn about_zero(self) -> bool;
 }
