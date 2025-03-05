@@ -68,7 +68,7 @@ fn expand_tree<'a>(
     new_points
 }
 
-fn compute_forest(figure: &mut Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)>> {
+fn compute_forest(figure: &Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)>> {
     let mut forest: Vec<(
         Vec<(PID, Vec<TargetedConstraint>)>, // order
         HashSet<PID>,                        // contained
@@ -166,11 +166,12 @@ fn compute_forest(figure: &mut Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)
 ///
 /// Currently an order is only valid if it contains all points. There is likely a
 /// way to seperate independent orders into their own figures.
-pub fn order_bfs(figure: &mut Figure) -> Vec<(PID, Vec<TargetedConstraint>)> {
+pub fn order_bfs(figure: &Figure) -> Vec<(PID, Vec<TargetedConstraint>)> {
     let mut forest = compute_forest(figure);
 
     debug_assert_eq!(forest.len(), 1);
     let order = forest.remove(0);
+    println!("{:?}\n{:?}", order, figure.points);
     debug_assert_eq!(order.len(), figure.points.len());
 
     order
