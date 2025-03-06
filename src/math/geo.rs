@@ -22,14 +22,6 @@ pub(crate) enum Geo {
     Two(TwoD),
 }
 
-pub(crate) fn line_from_points(p0: Vector, p1: Vector, l: Number) -> OneD {
-    OneD::Linear {
-        o: p0,
-        v: (p1 - p0).unit(),
-        l,
-    }
-}
-
 fn closest_linear(o: Vector, v: Vector, l: Number, p: Vector) -> Vector {
     let mut t = (p - o).dot(v);
     t = Number::max(t, l);

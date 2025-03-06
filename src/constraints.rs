@@ -1,8 +1,8 @@
 use crate::{
     figure::PID,
     math::{
-        geo::{line_from_points, Geo, OneD, TwoD},
         AboutEq, Number, Vector,
+        geo::{Geo, OneD, TwoD},
     },
 };
 
@@ -27,23 +27,23 @@ pub enum Polarity {
 #[derive(Debug, Clone)]
 pub enum Constraint {
     /// A geometric element with its specified measure.
-    /// 
+    ///
     /// Point order is dependent on the [`Element`].
     Element(Number, Element),
     /// A set of parallel lines.
-    /// 
+    ///
     /// Lines are specified as pairs of points.
     Parallel,
     /// A set of perpendicular lines.
-    /// 
+    ///
     /// Lines are specified as pairs of points. Lines are perpendicular to their neighbors, so lines alterante direction.
     Perpendicular,
     /// A set of points which all lie on the same line.
-    /// 
+    ///
     /// Points are unordered.
     Collinear,
     /// A set of angles with their relative directions.
-    /// 
+    ///
     /// Angles are specified in triples of points. Angles with the same polarity are in the same direction.
     /// Angles with opposite polarity are in opposite directions.
     Chirality(Vec<Polarity>),
@@ -81,26 +81,17 @@ impl Constraint {
 }
 
 /// Constraints used for solving.
-/// 
+///
 /// TargetedConstraints are [Constraints][Constraint] that have been ordered and targeted.
 /// This makes them essentially commands which are simply executed in order when solving.
-/// 
+///
 /// [PIDs][PID] specified are known points.
 /// The target is the only unknown point which is specified separately.
-/// 
+///
 /// TargetedConstraints should be generated with an order function like [order_bfs][crate::order_bfs].
 #[derive(Debug, Clone, Copy)]
 pub enum TargetedConstraint {
-    /// A geometric element with its specified measure.
     Element(Number, TargetedElement),
-    /// The first two points form a known line.
-    /// The third point and target make a parallel line.
-    Parallel(PID, PID, PID),
-    /// The first two points form a known line.
-    /// The third point and target make a perpendicular line.
-    Perpendicular(PID, PID, PID),
-    /// The known points make a line which the target also lies on.
-    Collinear(PID, PID),
     /// The first three points are a known angle.
     /// The next two points and the target form an angle.
     /// The direction of these angles is the same if the
@@ -114,11 +105,42 @@ pub enum TargetedConstraint {
 pub enum TargetedElement {
     /// The distance between the known point and the target.
     Distance(PID),
-    /// The angle between the two known points where the target is the vertex.
-    AngleEnd(PID, PID),
-    /// The angle between the second known point and the target
-    /// where the first known point is the vertex.
-    AngleVertex(PID, PID),
+    /// An [Angle][Element::Angle] where the unknown
+    /// point is the vertex.
+    ///
+    /// This case is unintuitively unique and complex.
+    /// The space is actually a circle that touches
+    /// each point. See [TargetedConstraint::geo].
+    Vertex(PID, PID),
+    /// Merged [Parallel][Constraint::Parallel],
+    /// [Perpendicular][Constraint::Perpendicular],
+    /// [Collinear][Constraint::Collinear],
+    /// and most [Angles][Element::Angle].
+    ///
+    /// The first point is considered the vertex.
+    /// If the third point is the same as the first
+    /// it is assumed to be an [Angle][Element::Angle]
+    /// and the lines are clamped to rays.
+    ///
+    /// The first two points form the baseline.
+    /// The third point and target make a line.
+    /// The [Number] is the measure of the angle
+    /// between the orientation of the baseline
+    /// and the target line.
+    ///
+    /// [Parallel][Constraint::Parallel] is an
+    /// angle of 0.
+    ///
+    /// [Perpendicular][Constraint::Perpendicular]
+    /// is an angle of PI/2.
+    ///
+    /// [Collinear][Constraint::Collinear] is an
+    /// angle of 0 where the second and third points
+    /// are the same.
+    ///
+    /// [Angles][Element::Angle] are when the first
+    /// and third points are the same.
+    Orient(PID, PID, PID),
 }
 impl TargetedConstraint {
     pub(crate) fn discretizing(&self) -> bool {
@@ -134,24 +156,7 @@ impl TargetedConstraint {
                     c: pos[center],
                     r: m,
                 })],
-                TargetedElement::AngleEnd(origin, other) => {
-                    let base = (pos[other] - pos[origin]).unit();
-                    let v_pos = base.rot(m);
-                    let v_neg = base.rot(-m);
-                    vec![
-                        Geo::One(OneD::Linear {
-                            o: pos[origin],
-                            v: v_pos,
-                            l: 0.0,
-                        }),
-                        Geo::One(OneD::Linear {
-                            o: pos[origin],
-                            v: v_neg,
-                            l: 0.0,
-                        }),
-                    ]
-                }
-                TargetedElement::AngleVertex(p0, p1) => {
+                TargetedElement::Vertex(p0, p1) => {
                     let (v, d) = (pos[p1] - pos[p0]).unit_mag();
                     debug_assert_ne!(d, 0.0);
                     let r = d / 2.0 / m.sin();
@@ -167,22 +172,29 @@ impl TargetedConstraint {
                         ]
                     }
                 }
+                TargetedElement::Orient(base_origin, base_other, origin) => {
+                    let base = (pos[base_other] - pos[base_origin]).unit();
+                    let v_pos = base.rot(m);
+                    let v_neg = base.rot(-m);
+                    let l = if base_origin == origin {
+                        0.0
+                    } else {
+                        Number::NEG_INFINITY
+                    };
+                    vec![
+                        Geo::One(OneD::Linear {
+                            o: pos[origin],
+                            v: v_pos,
+                            l,
+                        }),
+                        Geo::One(OneD::Linear {
+                            o: pos[origin],
+                            v: v_neg,
+                            l,
+                        }),
+                    ]
+                }
             },
-            TargetedConstraint::Parallel(p0, p1, origin) => vec![Geo::One(OneD::Linear {
-                o: pos[origin],
-                v: (pos[p1] - pos[p0]).unit(),
-                l: Number::NEG_INFINITY,
-            })],
-            TargetedConstraint::Perpendicular(p0, p1, origin) => vec![Geo::One(OneD::Linear {
-                o: pos[origin],
-                v: (pos[p1] - pos[p0]).unit().perp(),
-                l: Number::NEG_INFINITY,
-            })],
-            TargetedConstraint::Collinear(p0, p1) => vec![Geo::One(line_from_points(
-                pos[p0],
-                pos[p1],
-                Number::NEG_INFINITY,
-            ))],
             TargetedConstraint::Chirality(pol, p0, p1, p2, p3, p4) => {
                 let measured = (pos[p1] - pos[p0]).cross(pos[p2] - pos[p1]).signum();
                 let n = {
@@ -199,7 +211,9 @@ impl TargetedConstraint {
 }
 
 mod targeting {
-    use crate::{math::Number, PID};
+    use std::f64::consts::PI;
+
+    use crate::{PID, math::Number};
 
     use super::{Polarity, TargetedConstraint, TargetedElement};
     use itertools::Itertools;
@@ -231,17 +245,14 @@ mod targeting {
             (true, false, true) => {
                 return Some(vec![(
                     points[1],
-                    TargetedConstraint::Element(
-                        m,
-                        TargetedElement::AngleVertex(points[0], points[2]),
-                    ),
-                )])
+                    TargetedConstraint::Element(m, TargetedElement::Vertex(points[0], points[2])),
+                )]);
             }
             _ => return None,
         };
         Some(vec![(
             unknown,
-            TargetedConstraint::Element(m, TargetedElement::AngleEnd(vertex, known)),
+            TargetedConstraint::Element(m, TargetedElement::Orient(vertex, known, vertex)),
         )])
     }
 
@@ -270,7 +281,14 @@ mod targeting {
         for (known, unknown) in targets {
             constraints.push((
                 unknown,
-                TargetedConstraint::Parallel(known_0, known_1, known),
+                TargetedConstraint::Element(
+                    0.,
+                    if known == known_0 {
+                        TargetedElement::Orient(known_1, known_0, known)
+                    } else {
+                        TargetedElement::Orient(known_0, known_1, known)
+                    },
+                ),
             ));
         }
         Some(constraints)
@@ -301,11 +319,18 @@ mod targeting {
         for (target_idx, known, unknown) in targets {
             constraints.push((
                 unknown,
-                if (target_idx % 2) == (known_idx % 2) {
-                    TargetedConstraint::Parallel(known_0, known_1, known)
-                } else {
-                    TargetedConstraint::Perpendicular(known_0, known_1, known)
-                },
+                TargetedConstraint::Element(
+                    if (target_idx % 2) == (known_idx % 2) {
+                        0.
+                    } else {
+                        PI / 2.
+                    },
+                    if known == known_0 {
+                        TargetedElement::Orient(known_1, known_0, known)
+                    } else {
+                        TargetedElement::Orient(known_0, known_1, known)
+                    },
+                ),
             ));
         }
         Some(constraints)
@@ -327,7 +352,8 @@ mod targeting {
         if line.len() < 2 {
             return None;
         }
-        let line = TargetedConstraint::Collinear(line[0], line[1]);
+        let line =
+            TargetedConstraint::Element(0., TargetedElement::Orient(line[0], line[1], line[1]));
         let mut constraints = Vec::new();
         for target in unknown {
             constraints.push((target, line));

@@ -78,6 +78,13 @@ impl Vector {
             y: Number::sin(angle),
         }
     }
+    /// Component-wise absolute value.
+    pub fn abs(self) -> Self {
+        Self {
+            x: self.x.abs(),
+            y: self.y.abs()
+        }
+    }
 }
 
 impl Into<(Number, Number)> for Vector {
