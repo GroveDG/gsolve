@@ -258,8 +258,8 @@ impl Neg for Vector {
 
     fn neg(self) -> Self::Output {
         Self {
-            x: self.x,
-            y: self.y,
+            x: -self.x,
+            y: -self.y,
         }
     }
 }
