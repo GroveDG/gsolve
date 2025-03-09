@@ -135,7 +135,6 @@ fn compute_forest(figure: &Figure) -> Vec<Vec<(PID, Vec<TargetedConstraint>)>> {
             forest.push((order, points));
         }
     }
-
     let (orders, _): (_, Vec<_>) = forest.into_iter().unzip();
     orders
 }
@@ -171,7 +170,6 @@ pub fn order_bfs(figure: &Figure) -> Vec<(PID, Vec<TargetedConstraint>)> {
 
     debug_assert_eq!(forest.len(), 1);
     let order = forest.remove(0);
-    println!("{:?}\n{:?}", order, figure.points);
     debug_assert_eq!(order.len(), figure.points.len());
 
     order
