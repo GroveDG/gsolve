@@ -12,7 +12,5 @@
 pub mod math;
 #[allow(missing_docs)]
 pub mod constraints;
-pub mod order;
-pub mod solve;
 
-pub use constraints::{EqualitySystem, CID, PID};
+pub use constraints::{Figure, PID, QID};
