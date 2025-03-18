@@ -12,8 +12,7 @@
 pub mod math;
 #[allow(missing_docs)]
 pub mod constraints;
-mod figure;
 pub mod order;
 pub mod solve;
 
-pub use figure::{Figure, CID, PID};
+pub use constraints::{EqualitySystem, CID, PID};
