@@ -8,46 +8,42 @@ use crate::math::{
 /// Currently [`usize`].
 pub type PID = usize;
 
-pub fn distance(position: Vector, value: Number) -> Vec<Geo> {
-    vec![Geo::Circle(position, value)]
+pub fn distance(point: PID, value: Number) -> Quantity {
+    let func = move |pos: Vec<Vector>| vec![Geo::Circle(pos[0], value)];
+    Quantity {
+        func: Box::new(func),
+        points: vec![point],
+    }
 }
-pub fn orientation(position: Vector, value: Number) -> Vec<Geo> {
-    vec![Geo::Ray(position, Vector::from_angle(value))]
+pub fn orientation(point: PID, value: Number) -> Quantity {
+    let func = move |pos: Vec<Vector>| vec![Geo::Ray(pos[0], Vector::from_angle(value))];
+    Quantity {
+        func: Box::new(func),
+        points: vec![point],
+    }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct Quantity {
-    func: fn(Vector, Number) -> Vec<Geo>,
-    point: PID,
-    value: Number,
+    func: Box<dyn Fn(Vec<Vector>) -> Vec<Geo>>,
+    points: Vec<PID>,
 }
-
-#[derive(Debug, Clone, Default)]
+#[derive(Default)]
 pub struct Order {
-    order: Vec<[Quantity; 2]>,
+    order: Vec<Vec<Quantity>>,
 }
 impl Order {
-    pub fn add_point(&mut self, quantities: [Quantity; 2]) -> PID {
-        self.order.push(quantities);
+    pub fn add_point(&mut self, quantities: Vec<Quantity>) -> PID {
         let pid = self.order.len();
+        self.order.push(quantities);
         pid
     }
-    pub fn get(&self, i: usize) -> Option<&[Quantity; 2]> {
-        if i == 0 {
-            return None;
-        }
-        self.order.get(i - 1)
-    }
-    pub fn len(&self) -> usize {
-        self.order.len() + 1
-    }
     fn solve_iter(&self, i: usize, positions: &mut Vec<Vector>) -> Result<(), &'static str> {
-        let Some(quantities) = self.get(i) else {
+        let Some(quantities) = self.order.get(i) else {
             return Ok(());
         };
         let result = quantities
             .iter()
-            .map(|q| (q.func)(positions[q.point], q.value))
+            .map(|q| (q.func)(q.points.iter().map(|p| positions[*p]).collect()))
             .reduce(meet)
             .ok_or("Empty Quantities")?;
         for position in result {
@@ -59,7 +55,7 @@ impl Order {
         Err("Unsolved")
     }
     pub fn solve(self) -> Result<Vec<Vector>, &'static str> {
-        let mut positions = vec![Vector::ZERO; self.len()];
+        let mut positions = vec![Vector::ZERO; self.order.len()];
         self.solve_iter(1, &mut positions)?;
         Ok(positions)
     }
@@ -70,42 +66,18 @@ fn rect() {
     use std::f64::consts::PI;
 
     let mut fig = Order::default();
-    let a = 0;
-    let b = fig.add_point([
-        Quantity {
-            func: distance,
-            point: a,
-            value: 10.,
-        },
-        Quantity {
-            func: orientation,
-            point: a,
-            value: 0.,
-        }
+    let a = fig.add_point(vec![]);
+    let b = fig.add_point(vec![
+        distance(a, 10.),
+        orientation(a, 0.)
     ]);
-    let c = fig.add_point([
-        Quantity {
-            func: distance,
-            point: b,
-            value: 5.,
-        },
-        Quantity {
-            func: orientation,
-            point: b,
-            value: PI/2.,
-        }
+    let c = fig.add_point(vec![
+        distance(b, 5.),
+        orientation(b, PI/2.)
     ]);
-    let _d = fig.add_point([
-        Quantity {
-            func: distance,
-            point: a,
-            value: 5.,
-        },
-        Quantity {
-            func: distance,
-            point: c,
-            value: 10.,
-        }
+    let _d = fig.add_point(vec![
+        distance(a, 5.),
+        distance(c, 10.)
     ]);
     let result = fig.solve().unwrap();
     for p in result {
