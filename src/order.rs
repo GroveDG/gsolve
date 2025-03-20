@@ -1,5 +1,5 @@
 use crate::math::{
-    Number, Vector,
+    Vector,
     geo::{Geo, choose, meet},
 };
 
@@ -8,24 +8,9 @@ use crate::math::{
 /// Currently [`usize`].
 pub type PID = usize;
 
-pub fn distance(point: PID, value: Number) -> Quantity {
-    let func = move |pos: Vec<Vector>| vec![Geo::Circle(pos[0], value)];
-    Quantity {
-        func: Box::new(func),
-        points: vec![point],
-    }
-}
-pub fn orientation(point: PID, value: Number) -> Quantity {
-    let func = move |pos: Vec<Vector>| vec![Geo::Ray(pos[0], Vector::from_angle(value))];
-    Quantity {
-        func: Box::new(func),
-        points: vec![point],
-    }
-}
-
 pub struct Quantity {
-    func: Box<dyn Fn(Vec<Vector>) -> Vec<Geo>>,
-    points: Vec<PID>,
+    pub func: Box<dyn Fn(Vec<Vector>) -> Vec<Geo>>,
+    pub points: Vec<PID>,
 }
 #[derive(Default)]
 pub struct Order {
@@ -64,6 +49,22 @@ impl Order {
 #[test]
 fn rect() {
     use std::f64::consts::PI;
+    use crate::math::Number;
+
+    fn distance(point: PID, value: Number) -> Quantity {
+        let func = move |pos: Vec<Vector>| vec![Geo::Circle(pos[0], value)];
+        Quantity {
+            func: Box::new(func),
+            points: vec![point],
+        }
+    }
+    fn orientation(point: PID, value: Number) -> Quantity {
+        let func = move |pos: Vec<Vector>| vec![Geo::Ray(pos[0], Vector::from_angle(value))];
+        Quantity {
+            func: Box::new(func),
+            points: vec![point],
+        }
+    }
 
     let mut fig = Order::default();
     let a = fig.add_point(vec![]);
