@@ -1,16 +1,21 @@
 use std::{
-    fmt::Display,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+    fmt::Display, hash::Hash, ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign}
 };
 
 use super::{AboutEq, Number};
 
 /// 2D Vector.
 #[allow(missing_docs)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub struct Vector {
     pub x: Number,
     pub y: Number,
+}
+impl Hash for Vector {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.x.to_be_bytes().hash(state);
+        self.y.to_be_bytes().hash(state);
+    }
 }
 
 #[allow(missing_docs)]
@@ -77,6 +82,10 @@ impl Vector {
             x: Number::cos(angle),
             y: Number::sin(angle),
         }
+    }
+    /// Convert to polar.
+    pub fn angle(self) -> Number {
+        self.y.atan2(self.x)
     }
     /// Component-wise absolute value.
     pub fn abs(self) -> Self {
